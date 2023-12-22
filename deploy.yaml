@@ -13,20 +13,6 @@ spec:
         app.kubernetes.io/instance: trex
     spec:
       containers:
-        - image: trex
-          imagePullPolicy: Always
-          name: trex
-          ports:
-            - containerPort: 8000
-          command: ["sh", "-c"]
-          args:
-          - |
-            /rh-trex/trex migrate
-            /rh-trex/trex serve --api-server-bindaddress=0.0.0.0:8000
-          resources:
-            requests:
-              cpu: 10m
-              memory: 50Mi
         - image: quay.io/sclorg/postgresql-15-c8s:latest
           imagePullPolicy: Always
           name: psql
@@ -42,4 +28,19 @@ spec:
           resources:
             requests:
               cpu: 10m
-              memory: 512Mi              
+              memory: 512Mi       
+        - image: trex
+          imagePullPolicy: Always
+          name: trex
+          ports:
+            - containerPort: 8000
+          command: ["sh", "-c"]
+          args:
+          - |
+            /rh-trex/trex migrate
+            /rh-trex/trex serve --api-server-bindaddress=0.0.0.0:8000
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+             
