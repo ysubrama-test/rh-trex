@@ -20,7 +20,7 @@ components:
       deployment/cpuRequest: 10m
       deployment/memoryLimit: 100Mi
       deployment/memoryRequest: 50Mi
-      deployment/container-port: 8080
+      deployment/container-port: 8000
     kubernetes:
       uri: deploy.yaml
       endpoints:
