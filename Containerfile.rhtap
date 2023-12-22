@@ -21,6 +21,10 @@ COPY --from=builder \
     /rh-trex/trex \
     /usr/local/bin/
 
+COPY --from=builder \
+    /rh-trex/ \
+    /rh-trex/    
+
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/local/bin/trex", "serve"]
