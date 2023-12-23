@@ -23,6 +23,10 @@ spec:
         io.kompose.network/rh-trex-default: "true"
         io.kompose.service: trex
     spec:
+      volumes:
+        - configMap:
+            name: trex-init-cm0
+          name: trex-init-cm0    
       containers:
         - command: ["sh", "-c"]
           args:
@@ -31,7 +35,13 @@ spec:
             /rh-trex/trex serve --api-server-bindaddress=0.0.0.0:8000
           image: trex
           name: trex
-          ports:      
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /rh-trex/secrets
+              name: trex-init-cm0
+          resources: {}     
         - env:
             - name: POSTGRESQL_DATABASE
               value: rhtrex
@@ -50,6 +60,29 @@ spec:
             timeoutSeconds: 5
           name: trex-db
           resources: {}
+---
+apiVersion: v1
+data:
+  db.host: |
+    localhost
+  db.name: |
+    rhtrex
+  db.password: |
+    foobar-bizz-buzz
+  db.port: "5432"
+  db.user: |
+    trex
+  ocm-service.clientId: ocm-ams-testing
+  ocm-service.clientSecret: your-client-secret-here
+  ocm-service.token: your-ocm-api-token-here
+  sentry.key: |
+    your-key-here-for-dev-or-mounted-by-volume-in-a-deployment
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex-init
+  name: trex-init-cm0
 
 
              
