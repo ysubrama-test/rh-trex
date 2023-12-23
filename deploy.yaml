@@ -1,8 +1,50 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.service.group: trex
+    kompose.volume.type: configMap
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex
+  name: trex
+spec:
+  ports:
+    - name: "8000"
+      port: 8000
+      targetPort: 8000
+  selector:
+    io.kompose.service: trex
+status:
+  loadBalancer: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.service.expose: "true"
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex-db
+  name: trex-db
+spec:
+  ports:
+    - name: "5432"
+      port: 5432
+      targetPort: 5432
+  selector:
+    io.kompose.service: trex-db
+status:
+  loadBalancer: {}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
     kompose.service.group: trex
+    kompose.volume.type: configMap
   creationTimestamp: null
   labels:
     io.kompose.service: trex
@@ -12,59 +54,55 @@ spec:
   selector:
     matchLabels:
       io.kompose.service: trex
-  strategy: {}
+  strategy:
+    type: Recreate
   template:
     metadata:
       annotations:
-        kompose.service.expose: "true"
         kompose.service.group: trex
+        kompose.volume.type: configMap
       creationTimestamp: null
       labels:
         io.kompose.network/rh-trex-default: "true"
         io.kompose.service: trex
     spec:
-      volumes:
-        - configMap:
-            name: trex-init-cm0
-          name: trex-init-cm0    
+      initContainers:
+        - command:
+            - /rh-trex/trex
+            - migrate
+          image: quay.io/yogananth_subramanian/trex
+          name: trex-init
+          resources: {}
+          volumeMounts:
+            - mountPath: /rh-trex/secrets
+              name: trex-cm0
       containers:
         - command: ["sh", "-c"]
           args:
           - |
             /rh-trex/trex migrate
-            /rh-trex/trex serve --api-server-bindaddress=0.0.0.0:8000
+            /rh-trex/trex serve --api-server-bindaddress=0.0.0.0:8000      
           image: trex
           name: trex
           ports:
             - containerPort: 8000
               protocol: TCP
+          resources: {}
           volumeMounts:
             - mountPath: /rh-trex/secrets
-              name: trex-init-cm0
-          resources: {}     
-        - env:
-            - name: POSTGRESQL_DATABASE
-              value: rhtrex
-            - name: POSTGRESQL_PASSWORD
-              value: foobar-bizz-buzz
-            - name: POSTGRESQL_USER
-              value: trex
-          image: quay.io/sclorg/postgresql-15-c8s:latest
-          livenessProbe:
-            exec:
-              command:
-                - pg_isready
-            failureThreshold: 5
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-          name: trex-db
-          resources: {}
+              name: trex-cm0
+      restartPolicy: Always
+      volumes:
+        - configMap:
+            name: trex-cm0
+          name: trex-cm0
+status: {}
+
 ---
 apiVersion: v1
 data:
   db.host: |
-    localhost
+    trex-db
   db.name: |
     rhtrex
   db.password: |
@@ -81,8 +119,78 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   labels:
-    io.kompose.service: trex-init
-  name: trex-init-cm0
+    io.kompose.service: trex
+  name: trex-cm0
 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.service.expose: "true"
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex-db
+  name: trex-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: trex-db
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.service.expose: "true"
+      creationTimestamp: null
+      labels:
+        io.kompose.network/rh-trex-default: "true"
+        io.kompose.service: trex-db
+    spec:
+      containers:
+        - env:
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRESQL_DATABASE
+                  name: home-ysubrama-test-rh-trex--env
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRESQL_PASSWORD
+                  name: home-ysubrama-test-rh-trex--env
+            - name: POSTGRESQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRESQL_USER
+                  name: home-ysubrama-test-rh-trex--env
+          image: quay.io/sclorg/postgresql-15-c8s:latest
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+            failureThreshold: 5
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          name: trex-db
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
 
+---
+apiVersion: v1
+data:
+  POSTGRESQL_DATABASE: rhtrex
+  POSTGRESQL_PASSWORD: foobar-bizz-buzz
+  POSTGRESQL_USER: trex
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex-db-home-ysubrama-test-rh-trex--env
+  name: home-ysubrama-test-rh-trex--env
              
