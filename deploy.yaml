@@ -70,7 +70,7 @@ spec:
         - command:
             - /rh-trex/trex
             - migrate
-          image: trex
+          image: quay.io/yogananth_subramanian/trex
           name: trex-init
           resources: {}
           volumeMounts:
