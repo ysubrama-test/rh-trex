@@ -13,7 +13,7 @@ components:
         uri:  Containerfile.rhtap
         buildContext:  .
         rootRequired: false 
-  - name: kubernetes-deploy
+  - name: trex-deploy
     attributes:
       deployment/replicas: 1
       deployment/cpuLimit: '100m'
@@ -22,23 +22,34 @@ components:
       deployment/memoryRequest: 50Mi
       deployment/container-port: 8000
     kubernetes:
-      uri: deploy.yaml
+      uri: trex.yaml
       endpoints:
       - name: frontend-port
         targetPort: 8000
         path: /
+  - name: pg-deploy
+    kubernetes:
+      uri: pg.yaml
+      endpoints:
+      - name: pg-port
+        targetPort: 5432
+        exposure: none
 commands:
   - id: build-image
     apply:
       component: container-build
-  - id: deployk8s
+  - id: deploytrex
     apply:
-      component: kubernetes-deploy
+      component: trex-deploy
+  - id: deploypg
+    apply:
+      component: pg-deploy      
   - id: deploy
     composite:
       commands:
         - build-image
-        - deployk8s
+        - deploytrex
+        - deploypg
       group:
         kind: deploy
         isDefault: true
