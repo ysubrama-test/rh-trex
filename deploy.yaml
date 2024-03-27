@@ -66,22 +66,12 @@ spec:
         io.kompose.network/rh-trex-default: "true"
         io.kompose.service: trex
     spec:
-      initContainers:
-        - command:
-            - /rh-trex/trex
-            - migrate
-          image: trex
-          name: trex-init
-          resources: {}
-          volumeMounts:
-            - mountPath: /rh-trex/secrets
-              name: trex-cm0
       containers:
         - command: ["sh", "-c"]
           args:
           - |
-            /rh-trex/trex migrate
-            /rh-trex/trex serve --api-server-bindaddress=0.0.0.0:8000      
+            /usr/local/bin/trex migrate
+            /usr/local/bin/trex serve --api-server-bindaddress=0.0.0.0:8000      
           image: trex
           name: trex
           ports:
@@ -153,17 +143,17 @@ spec:
               valueFrom:
                 configMapKeyRef:
                   key: POSTGRESQL_DATABASE
-                  name: home-ysubrama-test-rh-trex--env
+                  name: pg-rh-trex--env
             - name: POSTGRESQL_PASSWORD
               valueFrom:
                 configMapKeyRef:
                   key: POSTGRESQL_PASSWORD
-                  name: home-ysubrama-test-rh-trex--env
+                  name: pg-rh-trex--env
             - name: POSTGRESQL_USER
               valueFrom:
                 configMapKeyRef:
                   key: POSTGRESQL_USER
-                  name: home-ysubrama-test-rh-trex--env
+                  name: pg-rh-trex--env
           image: quay.io/sclorg/postgresql-15-c8s:latest
           livenessProbe:
             exec:
@@ -191,6 +181,6 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   labels:
-    io.kompose.service: trex-db-home-ysubrama-test-rh-trex--env
-  name: home-ysubrama-test-rh-trex--env
+    io.kompose.service: pg-rh-trex--env
+  name: pg-rh-trex--env
              
