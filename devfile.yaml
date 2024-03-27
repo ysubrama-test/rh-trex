@@ -14,13 +14,6 @@ components:
         buildContext:  .
         rootRequired: false 
   - name: trex-deploy
-    attributes:
-      deployment/replicas: 1
-      deployment/cpuLimit: '100m'
-      deployment/cpuRequest: 10m
-      deployment/memoryLimit: 100Mi
-      deployment/memoryRequest: 50Mi
-      deployment/container-port: 8000
     kubernetes:
       uri: trex.yaml
       endpoints:
