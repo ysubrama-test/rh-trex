@@ -6,7 +6,7 @@ metadata:
   version: 1.0.0
   provider: Red Hat  
 components:
-  - name: outerloop-build
+  - name: container-build
     image:
       imageName: trex
       dockerfile:
@@ -30,7 +30,7 @@ components:
 commands:
   - id: build-image
     apply:
-      component: outerloop-build
+      component: container-build
   - id: deployk8s
     apply:
       component: kubernetes-deploy
