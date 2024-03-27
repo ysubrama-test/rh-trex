@@ -20,18 +20,28 @@ components:
       - name: frontend-port
         targetPort: 8000
         path: /
+  - name: pg-deploy
+    kubernetes:
+      uri: pg.yaml
+      endpoints:
+      - name: pg-port
+        targetPort: 5432
 commands:
   - id: build-image
     apply:
       component: container-build
   - id: deploytrex
     apply:
-      component: trex-deploy    
+      component: trex-deploy
+  - id: deploypg
+    apply:
+      component: pg-deploy        
   - id: deploy
     composite:
       commands:
         - build-image
         - deploytrex
+        - deploypg
       group:
         kind: deploy
         isDefault: true
