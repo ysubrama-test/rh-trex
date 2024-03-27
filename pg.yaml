@@ -1,0 +1,91 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.service.expose: "true"
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex-db
+  name: trex-db
+spec:
+  ports:
+    - name: "5432"
+      port: 5432
+      targetPort: 5432
+  selector:
+    io.kompose.service: trex-db
+status:
+  loadBalancer: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.service.expose: "true"
+  creationTimestamp: null
+  labels:
+    io.kompose.service: trex-db
+  name: trex-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: trex-db
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.service.expose: "true"
+      creationTimestamp: null
+      labels:
+        io.kompose.network/rh-trex-default: "true"
+        io.kompose.service: trex-db
+    spec:
+      containers:
+        - env:
+            - name: POSTGRESQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRESQL_DATABASE
+                  name: pg-rh-trex--env
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRESQL_PASSWORD
+                  name: pg-rh-trex--env
+            - name: POSTGRESQL_USER
+              valueFrom:
+                configMapKeyRef:
+                  key: POSTGRESQL_USER
+                  name: pg-rh-trex--env
+          image: quay.io/sclorg/postgresql-15-c8s:latest
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+            failureThreshold: 5
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          name: trex-db
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
+
+---
+apiVersion: v1
+data:
+  POSTGRESQL_DATABASE: rhtrex
+  POSTGRESQL_PASSWORD: foobar-bizz-buzz
+  POSTGRESQL_USER: trex
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: pg-rh-trex--env
+  name: pg-rh-trex--env
+             
