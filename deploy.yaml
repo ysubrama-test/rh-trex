@@ -163,12 +163,19 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: trex-db-data            
           name: trex-db
           ports:
             - containerPort: 5432
               protocol: TCP
           resources: {}
       restartPolicy: Always
+      volumes:
+      - name: trex-db-data
+        persistentVolumeClaim:
+          claimName: trex-db     
 status: {}
 
 ---
@@ -183,4 +190,16 @@ metadata:
   labels:
     io.kompose.service: pg-rh-trex--env
   name: pg-rh-trex--env
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: trex-db
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  
              
